@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style type="text/css"> 
+            .container {
+                position: relative;
+                line-height: 1;
+            }
+            .container span {
+                position: absolute;
+                left: 3px;
+                top: 1px;
+                pointer-events: none;
+                z-index: -1;
+            }
+            .container span i {
+                color: transparent;
+                opacity: 0;
+                visibility: hidden;
+            }
+
+            input.candidate,
+            .container span {
+                font-size: 16px;
+                font-family: monospace;
+                padding-right: 5px;
+                background-color: transparent;
+                text-transform: uppercase;
+            }
+
+            li {
+                line-height: 2;
+                font-family: helvetica;
+                list-style-type: none;
+            }
+
+            label {
+                display: inline-block;
+                width: 7em;
+            }
+
+            .candidate {
+                border: none;
+                border: 1px solid gray;
+                height: 30px;
+                border-radius: 2px;
+            }
+
+        
+        </style>
+    </head>
+    <body>
+        <ul>
+            <li>
+                <label for="candidatenumber">
+                    Candidate ID</label>
+                <input 
+                id="candidatenumber" 
+                type="tel"
+                name="candidatenumber" 
+                placeholder="xxxx-yyyy-zzzz" 
+                pattern="\d{4}-\d{4}-\d{4}" 
+                class="candidate" 
+                title="12-digit" />
+            </li>
+        </ul>
+       <script type="text/javascript">
+       var candidateMasking = {
+            maskedInputs : document.querySelectorAll('.candidate'),
+            maskedNumber : 'xdmyz9',
+            maskedLetter : '_',
+
+            init: function () {
+                candidateMasking.setMaskForCandidate(candidateMasking.maskedInputs);
+                candidateMasking.maskedInputs = document.querySelectorAll('.candidate');
+                candidateMasking.enableMaskingOfCandidate(candidateMasking.maskedInputs);
+            },
+
+            setMaskForCandidate: function (inputs) {
+                var i, l = inputs.length;
+
+                    for(i = 0; i < l; i++) {
+                        candidateMasking.createContainer(inputs[i]);
+                    }
+                },
+                createContainer : function (input) {
+                var InputText = '', 
+                placeholder = input.getAttribute('placeholder');
+
+                input.setAttribute('maxlength', placeholder.length);
+                input.setAttribute('data-placeholder', placeholder);
+                input.removeAttribute('placeholder');
+
+                InputText = '<span class="container">' + '<span aria-hidden="true" id="' + input.id + 
+                    'Mask"><i></i>' + placeholder + '</span>' + input.outerHTML + '</span>';
+
+                input.outerHTML = InputText;
+            },
+
+            setCandidateValueForMask : function (e) {
+                var value = e.target.value,
+                    placeholder = e.target.getAttribute('data-placeholder');
+
+                return "<i>" + value + "</i>" + placeholder.substr(value.length);
+            },
+            enableMaskingOfCandidate : function (inputs) {
+                var i, l;
+
+                for (i = 0, l = inputs.length; i < l; i++) {
+                    if (candidateMasking.maskedInputs[i].addEventListener) {
+                    candidateMasking.maskedInputs[i].addEventListener('keyup', function(e) {
+                        candidateMasking.handleCandidateDigiValue(e);
+                    }, false); 
+                    } else if (candidateMasking.maskedInputs[i].attachEvent) {
+                        candidateMasking.maskedInputs[i].attachEvent("onkeyup", function(e) {
+                        e.target = e.srcElement; 
+                        candidateMasking.handleCandidateDigiValue(e);
+                    });
+                    }
+                }
+            },
+
+            handleCandidateDigiValue : function (event) {
+                var id = event.target.getAttribute('id');
+                    
+                switch (event.keyCode) { 
+                    case 20: 
+                    case 17: 
+                    case 18: 
+                    case 16: 
+                    case 37:
+                    case 38:
+                    case 39:
+                    case 40:
+                    case  9: 
+                    return;
+                }
+
+                document.getElementById(id).value = candidateMasking.handleValueForCandidate(event);
+                document.getElementById(id + 'Mask').innerHTML = candidateMasking.setCandidateValueForMask(event);
+
+            },
+
+            handleValueForCandidate : function (e) {
+                var isCharsetPresent = e.target.getAttribute('data-charset'), 
+                    placeholder = isCharsetPresent || e.target.getAttribute('data-placeholder'),
+                    value = e.target.value, l = placeholder.length, newValue = '', 
+                    i, j, isInt, isLetter, strippedValue;
+
+                strippedValue = isCharsetPresent ? value.replace(/\W/g, "") : value.replace(/\D/g, "");
+
+                for (i = 0, j = 0; i < l; i++) {
+                    var x = 
+                    isInt = !isNaN(parseInt(strippedValue[j]));
+                    isLetter = strippedValue[j] ? strippedValue[j].match(/[A-Z]/i) : false;
+                    matchesNumber = candidateMasking.maskedNumber.indexOf(placeholder[i]) >= 0;
+                    matchesLetter = candidateMasking.maskedLetter.indexOf(placeholder[i]) >= 0;
+
+                    if ((matchesNumber && isInt) || (isCharsetPresent && matchesLetter && isLetter)) {
+
+                            newValue += strippedValue[j++];
+
+                        } else if ((!isCharsetPresent && !isInt && matchesNumber) ||
+                         (isCharsetPresent && ((matchesLetter && !isLetter) 
+                         || (matchesNumber && !isInt)))) {
+                            return newValue; 
+
+                    } else {
+                        newValue += placeholder[i];
+                    }
+                    if (strippedValue[j] == undefined) { 
+                        break;
+                    }
+                }
+                if (e.target.getAttribute('data-valid-example')) {
+                    return candidateMasking.candidateValidation(e, newValue);
+                }
+                return newValue;
+            },
+
+            candidateValidation : function (event, value) {
+                var validExample = event.target.getAttribute('data-valid-example'),
+                    pattern = new RegExp(event.target.getAttribute('pattern')),
+                    placeholder = event.target.getAttribute('data-placeholder'),
+                    l = value.length, testValue = '';
+
+                for ( i = l; i >= 0; i--) {
+                    testValue = value + validExample.substr(value.length);
+                    if (pattern.test(testValue)) {
+                    return value;
+                    } else {
+                    value = value.substr(0, value.length-1);
+                    }
+                }
+
+                return value;
+            },
+        }
+
+        candidateMasking.init();
+
+       </script>
+    </body>
+</html>
